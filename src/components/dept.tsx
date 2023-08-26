@@ -1,117 +1,118 @@
 import React, { useState } from "react";
+import { ExpandMore, ExpandLess } from "@mui/icons-material";
 import {
   Checkbox,
   List,
-  ListItem,
-  ListItemIcon,
+  ListItemButton,
   ListItemText,
   Collapse,
-  makeStyles,
 } from "@mui/material";
-import ExpandLess from "@mui/icons-material/ExpandLess";
-import ExpandMore from "@mui/icons-material/ExpandMore";
 
-const departmentsData = [
+interface Department {
+  department: string;
+  sub_departments: string[];
+}
+
+const data: Department[] = [
   {
-    id: 1,
-    department: "customer service",
-    sub_departments: [
-      { id: 11, name: "support" },
-      { id: 12, name: "customer success" },
-    ],
+    department: "customer_service",
+    sub_departments: ["support", "customer_success"],
   },
   {
-    id: 2,
     department: "design",
-    sub_departments: [
-      { id: 21, name: "graphic design" },
-      { id: 22, name: "product design" },
-    ],
+    sub_departments: ["graphic_design", "product_design", "web_design"],
   },
 ];
-const useStyles = makeStyles((theme) => ({
-  nested: {
-    paddingLeft: theme.spacing(4),....
 
-    
-  },
-}));
+const DepartmentListComponent: React.FC = () => {
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [expandedDepartments, setExpandedDepartments] = useState<string[]>([]);
 
-const DepartmentComponent: React.FC = () => {
-  const classes = useStyles();
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
-  const handleExpandClick = (department: string) => {
-    if (expanded === department) {
-      setExpanded(null);
+  const handleExpand = (department: string) => {
+    if (expandedDepartments.includes(department)) {
+      setExpandedDepartments(
+        expandedDepartments.filter((dep) => dep !== department)
+      );
     } else {
-      setExpanded(department);
+      setExpandedDepartments([...expandedDepartments, department]);
     }
   };
 
-  const handleItemClick = (item: string) => {
-    const updatedSelectedItems = selectedItems.includes(item)
-      ? selectedItems.filter((selectedItem) => selectedItem !== item)
-      : [...selectedItems, item];
-
-    setSelectedItems(updatedSelectedItems);
+  const handleSelect = (department: string) => {
+    if (selectedDepartments.includes(department)) {
+      setSelectedDepartments(
+        selectedDepartments.filter((dep) => dep !== department)
+      );
+    } else {
+      setSelectedDepartments([...selectedDepartments, department]);
+    }
   };
 
-  const isDepartmentSelected = (department: string) =>
-    selectedItems.includes(department) ||
-    departmentsData
-      .find((item) => item.department === department)
-      ?.sub_departments?.every((subDepartment) =>
-        selectedItems.includes(subDepartment)
-      );
+  const handleSelectAll = (subDepartments: string[]) => {
+    const allSelected = subDepartments.every((dep) =>
+      selectedDepartments.includes(dep)
+    );
 
-  const finalData = (
+    if (allSelected) {
+      setSelectedDepartments(
+        selectedDepartments.filter((dep) => !subDepartments.includes(dep))
+      );
+    } else {
+      setSelectedDepartments([...selectedDepartments, ...subDepartments]);
+    }
+  };
+
+  return (
     <List>
-      {departmentsData.map((dept) => (
-        <div key={dept.department}>
-          <ListItem button onClick={() => handleExpandClick(dept.department)}>
-            <ListItemIcon>
-              {expanded === dept.department ? <ExpandLess /> : <ExpandMore />}
-            </ListItemIcon>
-            <ListItemText primary={dept.department} />
-            <Checkbox
-              edge="end"
-              checked={isDepartmentSelected(dept.department)}
-              onChange={() => handleItemClick(dept.department)}
-            />
-          </ListItem>
-          <Collapse
-            in={expanded === dept.department}
-            timeout="auto"
-            unmountOnExit
-          >
-            <List component="div" disablePadding>
-              {dept.sub_departments.map((subDept) => (
-                <ListItem
-                  key={subDept}
-                  button
-                  className={classes.nested}
-                  onClick={() => handleItemClick(subDept)}
+      {data.map(({ department, sub_departments }) => (
+        <React.Fragment key={department}>
+          <ListItemButton onClick={() => handleExpand(department)}>
+            {expandedDepartments.includes(department) ? (
+              <ExpandLess />
+            ) : (
+              <ExpandMore />
+            )}
+            <ListItemText primary={department} />
+          </ListItemButton>
+          <Collapse in={expandedDepartments.includes(department)}>
+            <List disablePadding>
+              <ListItemButton onClick={() => handleSelectAll(sub_departments)}>
+                <Checkbox
+                  edge="start"
+                  checked={sub_departments.every((dep) =>
+                    selectedDepartments.includes(dep)
+                  )}
+                  indeterminate={
+                    sub_departments.some((dep) =>
+                      selectedDepartments.includes(dep)
+                    ) &&
+                    sub_departments.some(
+                      (dep) => !selectedDepartments.includes(dep)
+                    )
+                  }
+                  disableRipple
+                />
+                <ListItemText primary="{Fa}" />
+              </ListItemButton>
+              {sub_departments.map((subDepartment) => (
+                <ListItemButton
+                  key={subDepartment}
+                  onClick={() => handleSelect(subDepartment)}
                 >
-                  <ListItemIcon>
-                    <Checkbox
-                      edge="start"
-                      checked={selectedItems.includes(subDept)}
-                      disableRipple
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary={subDept} />
-                </ListItem>
+                  <Checkbox
+                    edge="start"
+                    checked={selectedDepartments.includes(subDepartment)}
+                    disableRipple
+                  />
+                  <ListItemText primary={subDepartment} />
+                </ListItemButton>
               ))}
             </List>
           </Collapse>
-        </div>
+        </React.Fragment>
       ))}
     </List>
   );
-
-  return finalData;
 };
 
-export default DepartmentComponent;
+export default DepartmentListComponent;
